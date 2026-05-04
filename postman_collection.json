@@ -1,0 +1,212 @@
+{
+  "info": {
+    "name": "Event Platform API",
+    "description": "REST API for event-platform (Django/DRF). Set base_url to http://127.0.0.1:8000 when using Docker on Windows. Use the Postman desktop app for localhost. After login, copy access_token and refresh_token from the response into collection variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "400a7a15-68ab-4069-90b7-33340288015c"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/v1/auth/signup",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seeker@example.com\",\n  \"password\": \"StrongPassword123!\",\n  \"role\": \"SEEKER\"\n}"
+            },
+            "description": "role: SEEKER | FACILITATOR. Password min 8 chars; Django validators apply. 201 = signup initiated."
+          }
+        },
+        {
+          "name": "Verify email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/v1/auth/verify-email",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seeker@example.com\",\n  \"otp\": \"123456\"\n}"
+            },
+            "description": "otp must be exactly 6 digits. Check console/email for OTP in development."
+          }
+        },
+        {
+          "name": "Resend OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/v1/auth/resend-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seeker@example.com\"\n}"
+            },
+            "description": "202 if resent; unknown email still returns generic 202."
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/v1/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seeker@example.com\",\n  \"password\": \"StrongPassword123!\"\n}"
+            },
+            "description": "Returns access_token and refresh_token. Save both to collection variables."
+          }
+        },
+        {
+          "name": "Refresh token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/api/v1/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+            },
+            "description": "SimpleJWT: body field name is refresh."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/events?page=1&page_size=20",
+              "query": [
+                { "key": "page", "value": "1", "description": "Pagination" },
+                { "key": "page_size", "value": "20", "description": "Max 100" },
+                { "key": "location", "value": "", "disabled": true },
+                { "key": "language", "value": "", "disabled": true },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "ordering", "value": "starts_at", "disabled": true },
+                { "key": "starts_after", "value": "", "disabled": true },
+                { "key": "starts_before", "value": "", "disabled": true }
+              ]
+            },
+            "description": "Requires JWT. Optional filters: location, language, search, ordering (starts_at, created_at), starts_after, starts_before (ISO datetimes)."
+          }
+        },
+        {
+          "name": "Retrieve",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/v1/events/{{event_id}}"
+          }
+        },
+        {
+          "name": "My events (facilitator)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/v1/events/mine",
+            "description": "Events created by the current user."
+          }
+        },
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/v1/events",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Python Backend Workshop\",\n  \"description\": \"Advanced Django and DRF patterns\",\n  \"language\": \"English\",\n  \"location\": \"Bangalore\",\n  \"starts_at\": \"2026-05-10T10:00:00Z\",\n  \"ends_at\": \"2026-05-10T12:00:00Z\",\n  \"capacity\": 100\n}"
+            },
+            "description": "Requires FACILITATOR role. starts_at/ends_at must be timezone-aware; ends_at > starts_at; capacity > 0 if set."
+          }
+        },
+        {
+          "name": "Partial update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/api/v1/events/{{event_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated title\",\n  \"capacity\": 50\n}"
+            },
+            "description": "Owner + facilitator only."
+          }
+        },
+        {
+          "name": "Delete (soft)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/v1/events/{{event_id}}",
+            "description": "Soft-delete. Owner + facilitator only."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Enrollments",
+      "item": [
+        {
+          "name": "Enroll in event",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/v1/events/{{event_id}}/enroll",
+            "description": "Requires SEEKER. Cannot enroll in own event; event must be in the future; capacity checks apply."
+          }
+        },
+        {
+          "name": "Cancel enrollment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/v1/enrollments/{{enrollment_id}}/cancel",
+            "description": "Cancels own enrollment; idempotent if already canceled."
+          }
+        },
+        {
+          "name": "Upcoming",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/v1/enrollments/upcoming",
+            "description": "Seeker's enrolled events with starts_at in the future."
+          }
+        },
+        {
+          "name": "Past",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/api/v1/enrollments/past",
+            "description": "Enrollments where event.ends_at is in the past."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" },
+    { "key": "event_id", "value": "1" },
+    { "key": "enrollment_id", "value": "1" }
+  ]
+}

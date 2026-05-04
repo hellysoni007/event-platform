@@ -1,0 +1,13 @@
+Django<5
+djangorestframework
+djangorestframework-simplejwt
+django-filter
+celery
+redis
+python-json-logger
+sentry-sdk
+python-dotenv
+psycopg2-binary
+pytest
+pytest-django
+factory-boy
