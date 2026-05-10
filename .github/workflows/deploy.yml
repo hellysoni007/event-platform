@@ -3,7 +3,7 @@ name: Deploy Django App
 on:
   push:
     branches:
-      - development
+      - development  # Triggering on development branch
 
 jobs:
   deploy:
@@ -12,14 +12,21 @@ jobs:
     steps:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
-
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-
           script: |
             cd event-platform
-            git pull origin main
-            docker compose down
-            docker compose up -d --build
+            # 1. Fetch all updates
+            git fetch origin development
+            
+            # 2. Force the server to match the development branch exactly
+            git reset --hard origin/development
+            
+            # 3. Rebuild and restart only what changed (Zero-downtime-ish)
+            # --remove-orphans cleans up old service names if you rename them
+            docker compose up -d --build --remove-orphans
+            
+            # 4. Optional: Prune old images to save EC2 disk space
+            docker image prune -f
