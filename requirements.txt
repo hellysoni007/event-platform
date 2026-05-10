@@ -1,3 +1,4 @@
+gunicorn
 Django<5
 djangorestframework
 djangorestframework-simplejwt
@@ -11,4 +12,3 @@ psycopg2-binary
 pytest
 pytest-django
 factory-boy
-gunicorn
